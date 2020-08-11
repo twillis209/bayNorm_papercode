@@ -682,7 +682,106 @@ plot_MEANVAR_v2<-function(sces,MAIN='',CAPTION='',legend.position='top'){
     return(list(mean.var=mean.var_v2,z.gene=z.gene_v2,z.cell=z.cell_v2,mean.zeros=mean.zeros_v2))
 }
 
+# Produces just the scatter plots in figure 1
+plot_MEANVAR_v3<-function(sces,MAIN='',CAPTION='',legend.position='top'){
+    
+    for (name in names(sces)) {
+        sce <- sces[[name]]
+        rowData(sce)$Dataset <- name
+        colData(sce)$Dataset <- name
+        sce <- scater::calculateQCMetrics(sce)
+        cpm(sce) <- scater::calculateCPM(sce, use_size_factors = FALSE)
+        sce <- addFeatureStats(sce, "counts")
+        sce <- addFeatureStats(sce, "cpm")
+        sce <- addFeatureStats(sce, "cpm", log = TRUE)
+        n.features <- colData(sce)$total_features_by_counts
+        colData(sce)$PctZero <- 100 * (1 - n.features / nrow(sce))
+        sces[[name]] <- sce
+    }
+    
+    features <- rowData(sces[[1]])
+    cells <- colData(sces[[1]])
+    
+    if (length(sces) > 1) {
+        for (name in names(sces)[-1]) {
+            sce <- sces[[name]]
+            features <- rbindMatched(features, rowData(sce))
+            cells <- rbindMatched(cells, colData(sce))
+        }
+    }
+    features$Dataset <- factor(features$Dataset, levels = names(sces))
+    cells$Dataset <- factor(cells$Dataset, levels = names(sces))
+    features <- data.frame(features)
+    cells <- data.frame(cells)
 
+    cbbPalette <- c("#000000", "#E69F00", "#56B4E9", "#009E73", "#F0E442", "#0072B2", "#D55E00", "#CC79A7")
+    #cbbPalette<-c("black", "red", "red2", "red4", "green", "green2", "green4", "blue", "blue2", "blue4")
+    colours <- cbbPalette[seq(1,length(sces))]
+ 
+    library(foreach)
+    mean.var <- #ggplot()+
+        ggplot(features,aes_string(x = "MeanLogCPM", y = "VarLogCPM",colour = "Dataset", fill = "Dataset")) +
+        geom_point(size = point.size, alpha = point.alpha,shape=46) +
+        scale_colour_manual(values = colours) +
+        scale_fill_manual(values = colours) +
+        guides(colour = guide_legend(override.aes = list(size=legendpointsize,shape=16,alpha=1)))+
+        # xlab(expression(paste("Mean", log[2], "(CPM + 1)"))) +
+        # ylab(expression(paste("Variance", log[2], "(CPM + 1)"))) +
+        xlab("Mean expression") +
+        ylab("Variance of gene expression") +
+        labs(caption=CAPTION,fill='',colour='')+
+        ggtitle("Mean-variance relationship")
+    #    guides (colour = guide_legend (override.aes=list(colour=NA)))+
+    #    theme(legend.text = element_text(size = textsize),legend.title  = element_text(size = textsize),plot.title = element_text(size = textsize),axis.title = element_text(size = textsize),panel.grid.major = element_blank(), panel.grid.minor = element_blank(), panel.background = element_blank(), axis.line = element_line(colour = "black"),plot.subtitle = element_text(size = textsize),plot.caption =  element_text(size = textsize),axis.text=element_text(size=textsize) ,legend.key.size = unit(legend_key_size,"line"),legend.position =legend.position,legend.background=element_blank(),legend.key =element_blank())
+    
+    mean.var_v2 <- ggplotGrob(mean.var)
+    # Check out the grobs
+    library(grid)
+    names.grobs <- grid.ls(grid.force( mean.var_v2), print=F)$name 
+    labels <- names.grobs[which(grepl("^label", names.grobs))]
+    
+    for(i in seq_along(labels)) {
+        mean.var_v2 <- editGrob(grid.force( mean.var_v2), gPath(labels[i]), grep = TRUE,  gp = gpar(col =colours [i]))
+    }
+    #mean.var_v2<-as_ggplot( mean.var_v2)
+    
+    
+    theoline_ref_name<-names(sces)[1]
+    theoline<-data.frame(xx =features$mean_counts[which(features$Dataset== theoline_ref_name)], yy=exp(-features$mean_counts[which(features$Dataset== theoline_ref_name)]))
+    
+    mean.zeros <- ggplot() +
+        
+        geom_point(data=features,
+                   aes_string(x = "MeanCounts",
+                              y = features$pct_dropout_by_counts/100,colour = "Dataset",
+                              fill = "Dataset"),
+                   size = point.size,
+                   alpha = point.alpha,shape=46,show.legend=F) +
+
+        geom_line(aes(x=theoline$xx,y=theoline$yy, linetype = 'exp(-mean expression)'),size = linewidth.exp,alpha = point.alpha)+
+        scale_x_log10(labels = scales::comma) +
+        scale_colour_manual(values = colours) +
+        scale_linetype_manual(values='dashed','Dashed line')+
+        #scale_fill_manual(values = colours) +
+#        guides(colour = guide_legend(override.aes = list(size=legendpointsize,shape=16,alpha=1)))+
+        labs(x = "Mean expression",y="Dropout rates",fill='Dataset',colour='Dataset',caption=CAPTION,title="Mean-dropout rates relationship",subtitle='')
+#        guides (colour = guide_legend (override.aes=list(colour=NA)))+
+#        theme(legend.text = element_text(size = textsize),legend.title  = element_text(size = textsize),plot.title = element_text(size = textsize),axis.title = element_text(size = textsize),panel.grid.major = element_blank(), panel.grid.minor = element_blank(), panel.background = element_blank(), axis.line = element_line(colour = "black"),plot.subtitle = element_text(size = textsize),plot.caption =  element_text(size = textsize),axis.text=element_text(size=textsize) ,legend.key.size = unit(legend_key_size,"line"),legend.position = legend.position,legend.background=element_blank(),legend.key =element_blank())
+    
+    mean.zeros_v2 <- ggplotGrob(mean.zeros)
+    # Check out the grobs
+    library(grid)
+    names.grobs <- grid.ls(grid.force( mean.zeros_v2), print=F)$name 
+    labels <- names.grobs[which(grepl("^label", names.grobs))]
+    
+    for(i in seq_along(labels)) {
+        mean.zeros_v2 <- editGrob(grid.force( mean.zeros_v2), gPath(labels[i]), grep = TRUE,  gp = gpar(col =colours [i]))
+    }
+    #mean.zeros_v2<-as_ggplot( mean.zeros_v2)
+    
+
+    return(list(mean.var=mean.var_v2,mean.zeros=mean.zeros_v2))
+}
 
 
 

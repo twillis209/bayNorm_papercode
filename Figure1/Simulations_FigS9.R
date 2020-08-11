@@ -1,9 +1,14 @@
 source("../Functions/QQsim_v2_SingleCellExperiment.R")
 source("../Functions/DROPOUT_FUN.r")
 library(SingleCellExperiment)
+library(ggplot2)
 
 #######Bacher study (H1_P24 cells)####
 load("../RealData/Bacher_study/H1_many_normalizations.RData")
+
+theme_set(theme_grey()+theme(
+  axis.title = element_text(size=12),
+  plot.title=element_text(hjust=0.5, size=14)))
 
 
 #Run Binomial simulation protocol
@@ -65,6 +70,50 @@ textsize<-10
 legendpointsize=4
 legend_key_size=0.8
 
+
+plot_DROPOUT<-function(listused_N1,MAIN='',CAPTION='',legendpointsize=1,legend_key_size=1,subtitle=''){
+
+library(foreach)
+DROPOUT_DAT<-foreach(i=1:length(listused_N1),.combine=rbind)%do%{
+
+    if(names(listused_N1)[i]=='Real') {colll<-cbPaletteee[1]}else if(names(listused_N1)[i]=='Binomial'){
+        colll<-cbPaletteee[2]
+    } else if(names(listused_N1)[i]=='Scaled raw'){
+        colll<-cbPaletteee[3]
+    } else{colll<-cbPaletteee[1]}
+
+  dropout<-apply(listused_N1[[i]],1,function(x){length(which(x==0))/length(x)})
+  meann<-rowMeans(listused_N1[[i]])
+  qqq<-cbind(dropout,meann,rep(names(listused_N1)[i],length(dropout)),rep(colll,length(dropout)))
+  return(qqq)
+}
+DROPOUT_DAT<-as.data.frame(DROPOUT_DAT)
+colnames(DROPOUT_DAT)<-c('Dropout rate','Mean expression','Dataset','Colour')
+DROPOUT_DAT$`Dropout rate`<-as.numeric(as.character(DROPOUT_DAT$`Dropout rate`))
+DROPOUT_DAT$`Mean expression`<-as.numeric(as.character(DROPOUT_DAT$`Mean expression`))
+DROPOUT_DAT$Dataset<-factor(DROPOUT_DAT$Dataset,levels=unique(DROPOUT_DAT$Dataset))
+DROPOUT_DAT$Colour<-factor(DROPOUT_DAT$Colour,levels=unique(DROPOUT_DAT$Colour))
+
+sces<-listused_N1
+colours <- scales::hue_pal()(length(sces))
+
+theoline_ref_name<-names(listused_N1)[1]
+
+theoline<-data.frame(xx =sort(DROPOUT_DAT$`Mean expression`[which(DROPOUT_DAT$Dataset==theoline_ref_name)]), yy=exp(-sort(DROPOUT_DAT$`Mean expression`[which(DROPOUT_DAT$Dataset==theoline_ref_name)])))
+
+mean.zeros <- ggplot() +
+    geom_line(data=theoline,aes(x=xx,y=yy, lty = 'exp(-mean expression)'))+
+    geom_point(data=DROPOUT_DAT,aes_string(x = DROPOUT_DAT$`Mean expression`, y = DROPOUT_DAT$`Dropout rate`,colour = DROPOUT_DAT$Colour),size = point.size, alpha = point.alpha,shape=46) +
+  scale_x_log10(labels = scales::comma) +
+  xlab("Mean expression") +
+  ylab("Dropout rates") +
+    scale_color_manual(values=as.character(unique(DROPOUT_DAT$Colour)),labels=names(listused_N1))+
+    scale_linetype_manual(values=1,'Black line')+
+  labs(x = "Mean expression",y="Dropout rates",fill='Dataset',colour='Dataset',caption=CAPTION,title=MAIN,subtitle=subtitle)+
+    guides(colour = guide_legend(override.aes = list(size=legendpointsize,shape=16,alpha=1)))
+return(mean.zeros)
+}
+
 D_SCnorm<-plot_DROPOUT(listused_H1p24,MAIN='',legendpointsize=legendpointsize,legend_key_size=legend_key_size,CAPTION='',subtitle='Black line: exp(-mean expression of raw data)')
 
 D_SCnorm_96<-plot_DROPOUT(listused_H1p96,MAIN='',legendpointsize=legendpointsize,legend_key_size=legend_key_size,CAPTION='',subtitle='')
@@ -97,16 +146,19 @@ D_Islam_div<-plot_DROPOUT(listused_Islam_div,MAIN='',legendpointsize=legendpoint
 cbPaletteee <- c("#999999", "#E69F00", "#56B4E9")
 
 library(gridExtra)
+library(ggpubr)
 library(cowplot)
-grid.arrange(D_SCnorm,D_SCnorm_div,D_SCnorm_96,D_SCnorm_div_96,D_Islam,D_Islam_div,nrow=3,ncol=2)
-pp<-plot_grid(
-    D_SCnorm+ theme(legend.position="none"),
-    D_SCnorm_div+ theme(legend.position="none"),
-    D_SCnorm_96+ theme(legend.position="none"),
-    D_SCnorm_div_96+ theme(legend.position="none"),
-    D_Islam+ theme(legend.position="none"),
-    D_Islam_div+ theme(legend.position="none"),
-    nrow=3,ncol=2)
-mm<-ggplot()+geom_point(aes(x=seq(1,3),y=seq(1,3),color=cbPaletteee))+scale_color_manual(values=cbPaletteee ,labels=c('Real','Binomial','Scaled and rounded raw data'))+labs(colour='Dataset')+theme(legend.position='bottom')
 
-plot_grid( pp, get_legend(mm),axis='b',align='v',ncol=1,rel_heights=c(20,1))
+#grid.arrange(D_SCnorm,D_SCnorm_div,D_SCnorm_96,D_SCnorm_div_96,D_Islam,D_Islam_div,nrow=3,ncol=2)
+pp<-plot_grid(
+    D_SCnorm+ theme(legend.position="none")+ggtitle("Bacher data: H1-4M hESCs"),
+    D_SCnorm_div+ theme(legend.position="none")+ggtitle("Bacher data: H1-4M hESCs"),
+    D_SCnorm_96+ theme(legend.position="none")+ggtitle("Bacher data: H1-1M hESCs"),
+    D_SCnorm_div_96+ theme(legend.position="none")+ggtitle("Bacher data: H1-1M hESCs"),
+    D_Islam+ theme(legend.position="none")+ggtitle("Islam data"),
+    D_Islam_div+ theme(legend.position="none")+ggtitle("Islam data"),
+    nrow=3,ncol=2)
+mm<-ggplot()+geom_point(aes(x=seq(1,3),y=seq(1,3),color=cbPaletteee))+scale_color_manual(values=cbPaletteee ,labels=c('Real','Binomial','Scaled and rounded real data'))+labs(colour='Data set')+theme(legend.position='bottom')
+
+pp<-plot_grid( pp, get_legend(mm),axis='b',align='v',ncol=1,rel_heights=c(20,1))
+ggsave(pp, filename="myFigure_S9.pdf")

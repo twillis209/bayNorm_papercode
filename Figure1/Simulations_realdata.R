@@ -65,27 +65,34 @@ SIM_FUN<-function(DATA,MU,SIZE,BETA)
 #
 ##begin bayNorm
 #bay_Klein<-bayNorm(Data=Real_Klein,BETA_vec = BETA_Klein,mean_version = T)
-load("../RealData/Klein_study/bay_Klein.RData")
 
+if(!file.exists("Simulations_realdata.RData")) {
 
-#run "Binomial_bayNorm" simulation protocol
-BaySim_Kelin<-SIM_FUN(DATA=Real_Klein,MU=bay_Klein$PRIORS$MME_prior$MME_MU,SIZE=bay_Klein$PRIORS$MME_SIZE_adjust,BETA=bay_Klein$BETA)
+	load("../RealData/Klein_study/bay_Klein.RData")
 
-#run "Binomial" simulation protocol
-Sim_List_Input<-trytt2(counts=Real_Klein,inputBeta = NULL,inputMeanBeta = 0.06,inputtrim = 0.01)
+	#run "Binomial_bayNorm" simulation protocol
+	BaySim_Kelin<-SIM_FUN(DATA=Real_Klein,MU=bay_Klein$PRIORS$MME_prior$MME_MU,SIZE=bay_Klein$PRIORS$MME_SIZE_adjust,BETA=bay_Klein$BETA)
 
-#run Splatter
-library(splatter)
-# argument to as.matrix was originally 'Real_data', replacing with 'Real_Klein'
-splatter_klein_params <- splatEstimate(as.matrix(Real_Klein))
-splatter_klein_sim<-splatSimulate(splatter_klein_params)
+	#run "Binomial" simulation protocol
+	Sim_List_Input<-trytt2(counts=Real_Klein,inputBeta = NULL,inputMeanBeta = 0.06,inputtrim = 0.01)
 
-#Prepare SCE lists, then we will put it into a function for producing comparison plots
-SCElist_Klein2<-list(
-    Real=SingleCellExperiment(assays=list(counts=as.matrix(Real_Klein))),
-    Binomial_bayNorm=SingleCellExperiment(assays=list(counts=BaySim_Kelin$downsample.counts)),
-    Binomial=SingleCellExperiment(assays=list(counts=assays(Sim_List_Input$SCE)$counts)),
-    Splatter=splatter_klein_sim)
+	#run Splatter
+	library(splatter)
+	# argument to as.matrix was originally 'Real_data', replacing with 'Real_Klein'
+	splatter_klein_params <- splatEstimate(as.matrix(Real_Klein))
+	splatter_klein_sim<-splatSimulate(splatter_klein_params)
+
+	#Prepare SCE lists, then we will put it into a function for producing comparison plots
+	SCElist_Klein2<-list(
+	    Real=SingleCellExperiment(assays=list(counts=as.matrix(Real_Klein))),
+	    Binomial_bayNorm=SingleCellExperiment(assays=list(counts=BaySim_Kelin$downsample.counts)),
+	    Binomial=SingleCellExperiment(assays=list(counts=assays(Sim_List_Input$SCE)$counts)),
+	    Splatter=splatter_klein_sim)
+
+	save.image("Simulations_realdata.RData")
+} else {
+	load("Simulations_realdata.RData")
+}
 
 #####main Fig 1: Klein####### 
 point.size<-1
@@ -98,10 +105,23 @@ legendpointsize=4
 legend_key_size=0.8
 
 source("../Functions/DROPOUT_FUN.r")
-meanvar_klein<-plot_MEANVAR_v2(sces=SCElist_Klein2,MAIN='Klein et al study',CAPTION='',legend.position=c(0.8,0.8))
+meanvar_klein<-plot_MEANVAR_v3(sces=SCElist_Klein2,MAIN='Klein et al study',CAPTION='',legend.position=c(0.8,0.8))
 
 library(gridExtra)
 library(ggpubr)
+
+#qq<-ggarrange(
+#    
+#    as_ggplot(meanvar_klein$mean.var),
+#    
+#    as_ggplot(meanvar_klein$mean.zeros),
+#    
+#    as_ggplot( meanvar_klein$z.gene),
+#    
+#    as_ggplot(meanvar_klein$z.cell),
+#    
+#    ncol=2,nrow=2,common.legend = T, legend="top")
+#ggsave(qq, file="figure_1b-e.pdf")
 
 qq<-ggarrange(
     
@@ -109,46 +129,42 @@ qq<-ggarrange(
     
     as_ggplot(meanvar_klein$mean.zeros),
     
-    as_ggplot( meanvar_klein$z.gene),
-    
-    as_ggplot(meanvar_klein$z.cell),
-    
-    ncol=2,nrow=2,common.legend = T, legend="top")
-ggsave(qq, file="figure_1b-e.pdf")
+    ncol=2,nrow=1,common.legend = T, legend="top")
+ggsave(qq, file="figure_1b-c.pdf")
 
 #Sup figure for Klein#####
-point.size<-1
-point.alpha<-0.4
-linewidth<-0.5
-linewidth.exp<-1
-
-textsize<-6
-legendpointsize=4
-legend_key_size=0.8
-legend.position='top'
-hline_alpha<-0.5
-hline_size<-0.8
-
-meanvar_klein<-plot_MEANVAR(sces=SCElist_Klein2,MAIN='Klein et al study',CAPTION='',legend.position=c(0.8,0.85))
-meanvar_klein_diff<-plot_MEANVAR_diff(sces=SCElist_Klein2,MAIN='',CAPTION='')
-
-qq<-ggarrange(
-    
-    meanvar_klein$mean.var,
-    meanvar_klein_diff$mean.var,
-    
-    meanvar_klein$mean.zeros,
-    meanvar_klein_diff$mean.zeros,
-    
-    meanvar_klein$z.gene,
-    meanvar_klein_diff$z.gene,
-    
-    meanvar_klein$z.cell,
-    meanvar_klein_diff$z.cell,
-    
-    ncol=2,nrow=4,common.legend = F)
-
-ggsave(qq, file="sfigure_2.pdf")
+#point.size<-1
+#point.alpha<-0.4
+#linewidth<-0.5
+#linewidth.exp<-1
+#
+#textsize<-6
+#legendpointsize=4
+#legend_key_size=0.8
+#legend.position='top'
+#hline_alpha<-0.5
+#hline_size<-0.8
+#
+#meanvar_klein<-plot_MEANVAR(sces=SCElist_Klein2,MAIN='Klein et al study',CAPTION='',legend.position=c(0.8,0.85))
+#meanvar_klein_diff<-plot_MEANVAR_diff(sces=SCElist_Klein2,MAIN='',CAPTION='')
+#
+#qq<-ggarrange(
+#    
+#    meanvar_klein$mean.var,
+#    meanvar_klein_diff$mean.var,
+#    
+#    meanvar_klein$mean.zeros,
+#    meanvar_klein_diff$mean.zeros,
+#    
+#    meanvar_klein$z.gene,
+#    meanvar_klein_diff$z.gene,
+#    
+#    meanvar_klein$z.cell,
+#    meanvar_klein_diff$z.cell,
+#    
+#    ncol=2,nrow=4,common.legend = F)
+#
+#ggsave(qq, file="sfigure_2.pdf")
 #######REAL DATA 2: Tung study (individual NA19098)####
 # TODO: commented out from here
 #rm(list=ls())
