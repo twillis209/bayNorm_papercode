@@ -1,5 +1,5 @@
 #load necessary functions########
-source("E:/RNAseqProject/QQsim_v2_SingleCellExperiment.R")
+source("../../Functions/QQsim_v2_SingleCellExperiment.R")
 sm <- function(x, y, x.log = FALSE,n.bins = 25){
     if(x.log){ 
         brks <- unique(quantile(x, probs = seq(0,1,len=25))) 
@@ -48,7 +48,7 @@ SIM_FUN<-function(DATA,MU,SIZE,BETA)
 
 #######REAL DATA 1: Klein study####
 # #Import Klein mouse cells 933 cells
-GSM1599494_ES_d0_main <- read.csv("E:/RNAseqProject/NEWPROJECT_PAPERS/Droplet Barcoding for Single-Cell Transcriptomics/allcsv/GSM1599494_ES_d0_main.csv",header=FALSE)
+GSM1599494_ES_d0_main <- read.csv("GSM1599494_ES_d0_main.csv",header=FALSE)
 Whole_dat<-as.data.frame(GSM1599494_ES_d0_main)
 rownames(Whole_dat)<-Whole_dat[,1]
 Whole_dat<-Whole_dat[,-1]
@@ -78,11 +78,11 @@ splatter_klein_params <- splatEstimate(as.matrix(Real_data))
 splatter_klein_sim<-splatSimulate(splatter_klein_params)
 
 #Prepare SCE lists, then we will put it into a function for producing comparison plots
+# Sim_List_Input doesn't have an SCE attribute
 SCElist_Klein2<-list(
     SCElist_Klein$Real,
     Binomial_bayNorm=SingleCellExperiment(assays=list(counts=BaySim_Kelin$downsample.counts)),
     Binomial=SingleCellExperiment(assays=list(counts=as.matrix(Sim_List_Input$SCE@assays@.xData$data$counts))),
     Splatter=splatter_klein_sim)
-
 
 save.image('Klein_bayNorm.RData')

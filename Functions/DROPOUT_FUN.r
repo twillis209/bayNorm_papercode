@@ -174,7 +174,7 @@ plot_MEANVAR<-function(sces,MAIN='',CAPTION='',legend.position='top'){
         sce <- addFeatureStats(sce, "counts")
         sce <- addFeatureStats(sce, "cpm")
         sce <- addFeatureStats(sce, "cpm", log = TRUE)
-        n.features <- colData(sce)$total_features
+        n.features <- colData(sce)$total_features_by_counts
         colData(sce)$PctZero <- 100 * (1 - n.features / nrow(sce))
         sces[[name]] <- sce
     }
@@ -204,7 +204,7 @@ plot_MEANVAR<-function(sces,MAIN='',CAPTION='',legend.position='top'){
 
 
     z.gene <- ggplot(features,
-                     aes_string(x = "Dataset", y = "pct_dropout_counts",
+                     aes_string(x = "Dataset", y = "pct_dropout_by_counts",
                                 colour = "Dataset")) +
         geom_violin(show.legend=F)+
         #geom_boxplot() +
@@ -344,12 +344,13 @@ plot_MEANVAR_diff<-function(sces,MAIN='',CAPTION=''){
         rowData(sce)$Dataset <- name
         colData(sce)$Dataset <- name
         sce <- scater::calculateQCMetrics(sce)
-        cpm(sce) <- scater::calculateCPM(sce, use_size_factors  = FALSE)
+        cpm(sce) <- scater::calculateCPM(sce, use_size_factors = FALSE)
         sce <- addFeatureStats(sce, "counts")
+        sce <- addFeatureStats(sce, "cpm")
         sce <- addFeatureStats(sce, "cpm", log = TRUE)
-        n.features <- colData(sce)$total_features
+        n.features <- colData(sce)$total_features_by_counts
         colData(sce)$PctZero <- 100 * (1 - n.features / nrow(sce))
-        rowData(sce)$RankCounts <- rank(rowData(sce)$mean_counts)
+	rowData(sce)$RankCounts<-rank(rowData(sce)$MeanCounts)
         sces[[name]] <- sce
     }
 
@@ -358,12 +359,12 @@ plot_MEANVAR_diff<-function(sces,MAIN='',CAPTION=''){
     ref.means <- sort(rowData(ref.sce)$MeanLogCPM)
     ref.vars <- sort(rowData(ref.sce)$VarLogCPM)
     ref.libs <- sort(colData(ref.sce)$total_counts)
-    ref.z.gene <- sort(rowData(ref.sce)$pct_dropout_counts)
+    ref.z.gene <- sort(rowData(ref.sce)$pct_dropout_by_counts)
     ref.z.cell <- sort(colData(ref.sce)$PctZero)
-
+	
     ref.rank.ord <- order(rowData(ref.sce)$RankCounts)
     ref.vars.rank <- rowData(ref.sce)$VarLogCPM[ref.rank.ord]
-    ref.z.gene.rank <- rowData(ref.sce)$pct_dropout_counts[ref.rank.ord]
+    ref.z.gene.rank <- rowData(ref.sce)$pct_dropout_by_counts[ref.rank.ord]
 
     for (name in names(sces)) {
         sce <- sces[[name]]
@@ -378,8 +379,8 @@ plot_MEANVAR_diff<-function(sces,MAIN='',CAPTION=''){
         colData(sce)$RankDiffLibSize <- colData(sce)$total_counts -
             colData(sce)$RefRankLibSize
         rowData(sce)$RefRankZeros <- ref.z.gene[rank(
-            rowData(sce)$pct_dropout_counts)]
-        rowData(sce)$RankDiffZeros <- rowData(sce)$pct_dropout_counts -
+            rowData(sce)$pct_dropout_by_counts)]
+        rowData(sce)$RankDiffZeros <- rowData(sce)$pct_dropout_by_counts -
             rowData(sce)$RefRankZeros
         colData(sce)$RefRankZeros <- ref.z.cell[rank(
             colData(sce)$PctZero)]
@@ -388,7 +389,7 @@ plot_MEANVAR_diff<-function(sces,MAIN='',CAPTION=''){
 
         rowData(sce)$MeanRankVarDiff <- rowData(sce)$VarLogCPM -
             ref.vars.rank[rowData(sce)$RankCounts]
-        rowData(sce)$MeanRankZerosDiff <- rowData(sce)$pct_dropout_counts -ref.z.gene.rank[rowData(sce)$RankCounts]
+        rowData(sce)$MeanRankZerosDiff <- rowData(sce)$pct_dropout_by_counts -ref.z.gene.rank[rowData(sce)$RankCounts]
 
         sces[[name]] <- sce
     }
@@ -539,7 +540,7 @@ plot_MEANVAR_v2<-function(sces,MAIN='',CAPTION='',legend.position='top'){
         sce <- addFeatureStats(sce, "counts")
         sce <- addFeatureStats(sce, "cpm")
         sce <- addFeatureStats(sce, "cpm", log = TRUE)
-        n.features <- colData(sce)$total_features
+        n.features <- colData(sce)$total_features_by_counts
         colData(sce)$PctZero <- 100 * (1 - n.features / nrow(sce))
         sces[[name]] <- sce
     }
@@ -566,7 +567,7 @@ plot_MEANVAR_v2<-function(sces,MAIN='',CAPTION='',legend.position='top'){
     colours <- cbbPalette[seq(1,length(sces))]
     
     z.gene <- ggplot(features,
-                     aes_string(x = "Dataset", y = "pct_dropout_counts",
+                     aes_string(x = "Dataset", y = "pct_dropout_by_counts",
                                 colour = "Dataset")) +
         geom_violin(show.legend=F)+
         #geom_boxplot() +
@@ -702,7 +703,7 @@ plot_MEANVAR_diff_v2<-function(sces,MAIN='',CAPTION=''){
         cpm(sce) <- scater::calculateCPM(sce, use_size_factors  = FALSE)
         sce <- addFeatureStats(sce, "counts")
         sce <- addFeatureStats(sce, "cpm", log = TRUE)
-        n.features <- colData(sce)$total_features
+        n.features <- colData(sce)$total_features_by_counts
         colData(sce)$PctZero <- 100 * (1 - n.features / nrow(sce))
         rowData(sce)$RankCounts <- rank(rowData(sce)$mean_counts)
         sces[[name]] <- sce
@@ -713,12 +714,12 @@ plot_MEANVAR_diff_v2<-function(sces,MAIN='',CAPTION=''){
     ref.means <- sort(rowData(ref.sce)$MeanLogCPM)
     ref.vars <- sort(rowData(ref.sce)$VarLogCPM)
     ref.libs <- sort(colData(ref.sce)$total_counts)
-    ref.z.gene <- sort(rowData(ref.sce)$pct_dropout_counts)
+    ref.z.gene <- sort(rowData(ref.sce)$pct_dropout_by_counts)
     ref.z.cell <- sort(colData(ref.sce)$PctZero)
     
-    ref.rank.ord <- order(rowData(ref.sce)$RankCounts)
+    ref.rank.ord <- order(rowData(sce)$RankCounts)
     ref.vars.rank <- rowData(ref.sce)$VarLogCPM[ref.rank.ord]
-    ref.z.gene.rank <- rowData(ref.sce)$pct_dropout_counts[ref.rank.ord]
+    ref.z.gene.rank <- rowData(ref.sce)$pct_dropout_by_counts[ref.rank.ord]
     
     for (name in names(sces)) {
         sce <- sces[[name]]
@@ -733,8 +734,8 @@ plot_MEANVAR_diff_v2<-function(sces,MAIN='',CAPTION=''){
         colData(sce)$RankDiffLibSize <- colData(sce)$total_counts -
             colData(sce)$RefRankLibSize
         rowData(sce)$RefRankZeros <- ref.z.gene[rank(
-            rowData(sce)$pct_dropout_counts)]
-        rowData(sce)$RankDiffZeros <- rowData(sce)$pct_dropout_counts -
+            rowData(sce)$pct_dropout_by_counts)]
+        rowData(sce)$RankDiffZeros <- rowData(sce)$pct_dropout_by_counts -
             rowData(sce)$RefRankZeros
         colData(sce)$RefRankZeros <- ref.z.cell[rank(
             colData(sce)$PctZero)]
@@ -743,7 +744,7 @@ plot_MEANVAR_diff_v2<-function(sces,MAIN='',CAPTION=''){
         
         rowData(sce)$MeanRankVarDiff <- rowData(sce)$VarLogCPM -
             ref.vars.rank[rowData(sce)$RankCounts]
-        rowData(sce)$MeanRankZerosDiff <- rowData(sce)$pct_dropout_counts -ref.z.gene.rank[rowData(sce)$RankCounts]
+        rowData(sce)$MeanRankZerosDiff <- rowData(sce)$pct_dropout_by_counts -ref.z.gene.rank[rowData(sce)$RankCounts]
         
         sces[[name]] <- sce
     }

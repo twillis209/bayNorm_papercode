@@ -1,9 +1,7 @@
 load("RAW_INITIATE.RData")
-source("E:/RNAseqProject/MANY_DE_FUN.R")
+source("../../Functions/MANY_DE_FUN.R")
 
 H9_data_comb<-cbind(H9_p24,H9_p96)[whichg_H9,]
-
-
 
 #bayNorm##########
 #Using spike-ins to estimate BETA

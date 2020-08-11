@@ -1,5 +1,5 @@
 library(readr)
-H1_p24<- read_csv("E:/RNAseqProject/NEWPROJECT_PAPERS/RNAseq_Rpackage_relatedPaper/scRNA_package/SCnorm/SCnorm_dat/H1b5s_EC_p24_93cells.csv")
+H1_p24<- read_csv("H1b5s_EC_p24_93cells.csv")
 
 H1_p24<-as.data.frame(H1_p24)
 rownames(H1_p24)<-H1_p24[,1]
@@ -7,7 +7,7 @@ H1_p24<-H1_p24[,-1]
 dim(H1_p24)
 
 
-H1_p96<- read_csv("E:/RNAseqProject/NEWPROJECT_PAPERS/RNAseq_Rpackage_relatedPaper/scRNA_package/SCnorm/SCnorm_dat/H1b5s_EC_p96_93cells.csv")
+H1_p96<- read_csv("H1b5s_EC_p96_93cells.csv")
 H1_p96<-as.data.frame(H1_p96)
 rownames(H1_p96)<-H1_p96[,1]
 H1_p96<-H1_p96[,-1]
@@ -18,7 +18,7 @@ dim(H1_p96)
 
 ########H9######
 library(readr)
-H9_p24<- read_csv("E:/RNAseqProject/NEWPROJECT_PAPERS/RNAseq_Rpackage_relatedPaper/scRNA_package/SCnorm/SCnorm_dat/H9b3s_EC_p24_91cells.csv")
+H9_p24<- read_csv("H9b3s_EC_p24_91cells.csv")
 H9_p24<-as.data.frame(H9_p24)
 rownames(H9_p24)<-H9_p24[,1]
 H9_p24<-H9_p24[,-1]
@@ -26,7 +26,7 @@ dim(H9_p24)
 
 
 library(readr)
-H9_p96<- read_csv("E:/RNAseqProject/NEWPROJECT_PAPERS/RNAseq_Rpackage_relatedPaper/scRNA_package/SCnorm/SCnorm_dat/H9b3s_EC_p96_91cells.csv")
+H9_p96<- read_csv("H9b3s_EC_p96_91cells.csv")
 H9_p96<-as.data.frame(H9_p96)
 rownames(H9_p96)<-H9_p96[,1]
 H9_p96<-H9_p96[,-1]

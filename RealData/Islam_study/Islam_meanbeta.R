@@ -1,10 +1,10 @@
 library(bayNorm)
-source("E:/RNAseqProject/MANY_DE_FUN.R")
-source("E:/RNAseqProject/MANY_NORM_FUN.R")
+source("../../Functions/MANY_DE_FUN.R")
+source("../../Functions/MANY_NORM_FUN.r")
 
-Top1000_Jaakkola<-read.table(file="E:/RNAseqProject/NEWPROJECT_PAPERS/Classical paper/DE_Comparison of methods to detect differentially/Top1000_Jaakkola.txt")
+Top1000_Jaakkola<-read.table(file="Top1000_Jaakkola.txt")
 
-DAT_Jaakkola<-read.delim("E:/RNAseqProject/NEWPROJECT_PAPERS/Classical paper/DE_Comparison of methods to detect differentially/Islam_overlap.txt", sep = "\t" , header = T)
+DAT_Jaakkola<-read.delim("Islam_overlap.txt", sep = "\t" , header = T)
 
 length(intersect(Top1000_Jaakkola$V1,rownames(DAT_Jaakkola)))
 DAT_Jaakkola<-as.matrix(DAT_Jaakkola)
